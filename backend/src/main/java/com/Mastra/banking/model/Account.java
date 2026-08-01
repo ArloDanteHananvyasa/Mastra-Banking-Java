@@ -5,6 +5,8 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.hibernate.annotations.SQLRestriction;
+
 import jakarta.persistence.*;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
@@ -14,28 +16,28 @@ import lombok.NoArgsConstructor;
 @Entity
 @Data
 @NoArgsConstructor
+@SQLRestriction("deletedAt IS NULL")
 public class Account {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long account_id;
+    private Long accountId;
     
     @NotBlank
     @Column(nullable = false, unique = true)
-    private String account_num;
+    private String accountNum;
 
     @DecimalMin(value = "0.0", inclusive = true)
     @Column(nullable = false)
     private BigDecimal balance;
-
-    private enum Status {ACTIVE, CLOSED;}
+ 
     @Enumerated(EnumType.STRING)
     private Status status;
  
-    private LocalDateTime created_at;
-    private LocalDateTime deleted_at;
+    private LocalDateTime createdAt;
+    private LocalDateTime deletedAt;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "holder_id", nullable = false)
+    @JoinColumn(name = "account_id", nullable = false)
     private Holder holder;
 
     @OneToMany(mappedBy = "account", cascade = CascadeType.ALL, orphanRemoval = false)
@@ -46,9 +48,13 @@ public class Account {
 
     @PrePersist
     protected void onCreate(){
-        this.created_at = LocalDateTime.now();
+        this.createdAt = LocalDateTime.now();
         if(this.status == null) {
             this.status = Status.ACTIVE;
         }
+    }
+
+    public enum Status {
+        ACTIVE, CLOSED;
     }
 }

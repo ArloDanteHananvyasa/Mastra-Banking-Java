@@ -7,6 +7,9 @@ import jakarta.validation.constraints.NotBlank;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+
+import org.hibernate.annotations.SQLRestriction;
+
 import java.time.LocalDate;
 
 import lombok.Data;
@@ -15,10 +18,11 @@ import lombok.NoArgsConstructor;
 @Entity
 @Data
 @NoArgsConstructor
+@SQLRestriction("deletedAt IS NULL")
 public class Holder {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long holder_id;
+    private Long holderId;
 
     @NotBlank
     @Column(nullable = false, length = 200)
@@ -45,15 +49,15 @@ public class Holder {
     @Column(nullable = false)
     private LocalDate dob;
 
-    private LocalDateTime created_at;
-    private LocalDateTime deleted_at;
+    private LocalDateTime createdAt;
+    private LocalDateTime deletedAt;
 
     @OneToMany(mappedBy = "holder", cascade = CascadeType.ALL, orphanRemoval = false)
     private List<Account> accounts = new ArrayList<Account>();
 
     @PrePersist
     protected void onCreate(){
-        this.created_at = LocalDateTime.now();
+        this.createdAt = LocalDateTime.now();
     }
 
 }
