@@ -3,21 +3,23 @@ package com.Mastra.banking.model;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
+import org.hibernate.annotations.SQLRestriction;
+
 import jakarta.persistence.*;
 import jakarta.validation.constraints.DecimalMin;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-
 @Entity
 @Data
 @NoArgsConstructor
+@SQLRestriction("deletedAt IS NULL")
 public class Transaction {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long transaction_id;
+    private Long transactionId;
 
-    private LocalDateTime time_stamp;
+    private LocalDateTime timeStamp;
 
     @DecimalMin(value = "0.0", inclusive = true)
     @Column(nullable = false)
@@ -27,7 +29,7 @@ public class Transaction {
     @Enumerated(EnumType.STRING)
     private Type type;
 
-    private LocalDateTime deleted_at;
+    private LocalDateTime deletedAt;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "account_id", nullable = false)
@@ -39,6 +41,6 @@ public class Transaction {
 
     @PrePersist
     protected void onCreate(){
-        this.time_stamp = LocalDateTime.now();
+        this.timeStamp = LocalDateTime.now();
     }
 }
