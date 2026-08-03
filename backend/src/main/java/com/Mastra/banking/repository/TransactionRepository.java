@@ -14,5 +14,5 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long>{
     
     List<Transaction> findByAccountAndTimeStamp(Account account, LocalDateTime time_stamp);
     
-    List<Transaction> findByAccountAndType(Account account, String type);
+    List<Transaction> findByAccountAndType(Account account, Transaction.Type type);
 }
