@@ -37,14 +37,14 @@ public class Account {
     private LocalDateTime deletedAt;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "account_id", nullable = false)
+    @JoinColumn(name = "holderId", nullable = false)
     private Holder holder;
 
     @OneToMany(mappedBy = "account", cascade = CascadeType.ALL, orphanRemoval = false)
     private List<Transaction> transactions = new ArrayList<Transaction>();
 
     @OneToMany(mappedBy = "relatedAccount")
-    private List<Transaction> related_transactions = new ArrayList<Transaction>();
+    private List<Transaction> relatedTransactions = new ArrayList<Transaction>();
 
     @PrePersist
     protected void onCreate(){

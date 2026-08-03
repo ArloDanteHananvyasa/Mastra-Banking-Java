@@ -25,22 +25,25 @@ public class Transaction {
     @Column(nullable = false)
     private BigDecimal amount;
 
-    private enum Type {DEPOSIT, WITHDRAWAL, TRANSFER_OUT, TRANSFER_IN;}
     @Enumerated(EnumType.STRING)
     private Type type;
 
     private LocalDateTime deletedAt;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "account_id", nullable = false)
+    @JoinColumn(name = "accountId", nullable = false)
     private Account account;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "related_account_id", nullable = false)
+    @JoinColumn(name = "relatedAccountId", nullable = false)
     private Account relatedAccount;
 
     @PrePersist
     protected void onCreate(){
         this.timeStamp = LocalDateTime.now();
+    }
+
+    public enum Type {
+        DEPOSIT, WITHDRAWAL, TRANSFER_OUT, TRANSFER_IN;
     }
 }
