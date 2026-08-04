@@ -1,6 +1,6 @@
 package com.Mastra.banking.dto.response;
 
-public record LoginHolderResponse(
+public record LoginResponse(
     Long holderId,
     String name,
     String email
