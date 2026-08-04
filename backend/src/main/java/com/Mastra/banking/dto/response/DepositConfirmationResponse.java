@@ -4,5 +4,6 @@ import java.math.BigDecimal;
 
 public record DepositConfirmationResponse(
     Long transactionId,
-    BigDecimal amount
+    BigDecimal amount,
+    BigDecimal newBalance
 ) {}
