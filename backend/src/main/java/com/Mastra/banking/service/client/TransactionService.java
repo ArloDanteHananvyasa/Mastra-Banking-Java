@@ -3,6 +3,7 @@ package com.Mastra.banking.service.client;
 import java.math.BigDecimal;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.Mastra.banking.dto.request.DepositRequest;
 import com.Mastra.banking.dto.request.TransferRequest;
@@ -25,19 +26,27 @@ public class TransactionService {
     private final TransactionRepository transactionRepository;
     private final AccountRepository accountRepository;
 
+    @Transactional
     public DepositConfirmationResponse deposit(DepositRequest request) {
         
-        Account currentAccount = accountRepository.findById(request.accountId()).get();
+        Account currentAccount = new Account();
 
+        if (accountRepository.findById(request.accountId()).isPresent()) {
+            throw new RuntimeException("Cannot find account with this number");
+        }
+        else {
+            currentAccount = accountRepository.findById(request.accountId()).get();
+        }
+        
         BigDecimal newBalance = currentAccount.getBalance().add(request.amount());
 
         currentAccount.setBalance(newBalance);
 
-        accountRepository.saveAndFlush(currentAccount);
+        accountRepository.save(currentAccount);
 
         Transaction newTransaction = new Transaction();
         newTransaction.setAccount(currentAccount);
-        newTransaction.setAmount(newBalance);
+        newTransaction.setAmount(request.amount());
         newTransaction.setType(Type.DEPOSIT);
 
         Transaction saved = transactionRepository.save(newTransaction);
@@ -49,9 +58,17 @@ public class TransactionService {
         );
     }
 
+    @Transactional
     public WithdrawConfirmationResponse withdraw(WithdrawRequest request) {
         
-        Account currentAccount = accountRepository.findById(request.accountId()).get();
+        Account currentAccount = new Account();
+
+        if (accountRepository.findById(request.accountId()).isPresent()) {
+            throw new RuntimeException("Cannot find account with this number");
+        }
+        else {
+            currentAccount = accountRepository.findById(request.accountId()).get();
+        }
 
         BigDecimal newBalance = currentAccount.getBalance().subtract(request.amount());
 
@@ -61,11 +78,11 @@ public class TransactionService {
 
         currentAccount.setBalance(newBalance);
 
-        accountRepository.saveAndFlush(currentAccount);
+        accountRepository.save(currentAccount);
 
         Transaction newTransaction = new Transaction();
         newTransaction.setAccount(currentAccount);
-        newTransaction.setAmount(newBalance);
+        newTransaction.setAmount(request.amount());
         newTransaction.setType(Type.WITHDRAWAL);
 
         Transaction saved = transactionRepository.save(newTransaction);
@@ -77,16 +94,36 @@ public class TransactionService {
         );
     } 
 
+    @Transactional
     public TransferConfirmationResponse transfer(TransferRequest request) {
 
-        Account fromAccount = accountRepository.findById(request.fromAccount()).get();
+        Account fromAccount = new Account();
+        if (accountRepository.findById(request.fromAccount()).isPresent()) {
+            throw new RuntimeException("Cannot find account with this number");
+        }
+        else {
+            fromAccount = accountRepository.findById(request.fromAccount()).get();
+        }
         BigDecimal fromBalance = fromAccount.getBalance();
+
+        if (fromBalance.compareTo(BigDecimal.ZERO) == -1) {
+            throw new RuntimeException("DECLINED! Withdrawal cannot exceed account balance.");
+        }
         
-        Account toAccount = accountRepository.findByAccountNum(request.toAccountNum()).get();
+        Account toAccount = new Account();
+        if (accountRepository.findByAccountNum(request.toAccountNum()).isPresent()) {
+            throw new RuntimeException("Cannot find account with this number");
+        }
+        else {
+            toAccount = accountRepository.findByAccountNum(request.toAccountNum()).get();
+        }
         BigDecimal toBalance = toAccount.getBalance();
 
-        fromBalance.subtract(request.amount());
-        toBalance.add(request.amount());
+        fromAccount.setBalance(fromBalance.subtract(request.amount()));
+        toAccount.setBalance(toBalance.add(request.amount()));
+
+        accountRepository.save(fromAccount);
+        accountRepository.save(toAccount);
 
         Transaction fromTransaction = new Transaction();
         fromTransaction.setAccount(fromAccount);
@@ -105,7 +142,7 @@ public class TransactionService {
 
         return new TransferConfirmationResponse(
             saved.getTransactionId(),
-            toAccount.getHolder().getName(),
+            toAccount.getAccountNum(),
             request.amount()
         );
 

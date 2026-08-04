@@ -39,10 +39,13 @@ public class HolderService {
 
     public LoginHolderResponse login(LoginRequest request) {
 
-        Holder currentHolder = holderRepository.findByEmail(request.email()).get();
+        Holder currentHolder = new Holder();
         
-        if (currentHolder == null) {
+        if (!holderRepository.findByEmail(request.email()).isPresent()) {
             throw new RuntimeException("No Account registered under this email address");
+        } 
+        else {
+            currentHolder = holderRepository.findByEmail(request.email()).get();
         }
 
         if (encoder.matches(currentHolder.getPassword(), request.password())) {
