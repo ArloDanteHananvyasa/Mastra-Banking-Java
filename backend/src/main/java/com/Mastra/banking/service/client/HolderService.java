@@ -1,11 +1,16 @@
 package com.Mastra.banking.service.client;
 
+import java.time.LocalDateTime;
+
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import com.Mastra.banking.dto.request.DeleteRequest;
 import com.Mastra.banking.dto.request.LoginRequest;
 import com.Mastra.banking.dto.request.RegisterHolderRequest;
+import com.Mastra.banking.dto.response.DeleteConfirmationResponse;
 import com.Mastra.banking.dto.response.LoginHolderResponse;
+import com.Mastra.banking.model.Account;
 import com.Mastra.banking.model.Holder;
 import com.Mastra.banking.repository.HolderRepository;
 
@@ -18,7 +23,7 @@ public class HolderService {
     private final HolderRepository holderRepository;
     private final PasswordEncoder encoder;
 
-    public String register(RegisterHolderRequest request) {
+    public LoginHolderResponse register(RegisterHolderRequest request) {
 
         if (holderRepository.findByEmail(request.email()).isPresent()) {
             throw new RuntimeException("Email already registered");
@@ -34,7 +39,12 @@ public class HolderService {
 
         holderRepository.save(holder);
 
-        return "Registration Successfull";
+        return new LoginHolderResponse(
+            holder.getHolderId(),
+            holder.getName(),
+            holder.getEmail()
+            //JWT Token should be here i'm guessing
+        );
     }
 
     public LoginHolderResponse login(LoginRequest request) {
@@ -63,4 +73,27 @@ public class HolderService {
     }
 
     //need to add a logout handler
+
+    public DeleteConfirmationResponse deleteAccount(DeleteRequest request) {
+        
+        Holder currentHolder = new Holder();
+
+        if (!holderRepository.findById(request.id()).isPresent()) {
+            throw new RuntimeException("No Holder found");
+        } 
+        else {
+            currentHolder = holderRepository.findById(request.id()).get();
+        }
+
+        currentHolder.setDeletedAt(LocalDateTime.now());
+
+        holderRepository.save(currentHolder);
+
+        return new DeleteConfirmationResponse(
+            request.id(),
+            "Holder has successfully been deleted"
+        );
+
+
+    }
 }

@@ -1,13 +1,16 @@
 package com.Mastra.banking.service.client;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.Mastra.banking.dto.request.DeleteRequest;
 import com.Mastra.banking.dto.request.DepositRequest;
 import com.Mastra.banking.dto.request.TransferRequest;
 import com.Mastra.banking.dto.request.WithdrawRequest;
+import com.Mastra.banking.dto.response.DeleteConfirmationResponse;
 import com.Mastra.banking.dto.response.DepositConfirmationResponse;
 import com.Mastra.banking.dto.response.TransferConfirmationResponse;
 import com.Mastra.banking.dto.response.WithdrawConfirmationResponse;
@@ -99,7 +102,7 @@ public class TransactionService {
 
         Account fromAccount = new Account();
         if (accountRepository.findById(request.fromAccount()).isPresent()) {
-            throw new RuntimeException("Cannot find account with this number");
+            throw new RuntimeException("This account doesn't exist");
         }
         else {
             fromAccount = accountRepository.findById(request.fromAccount()).get();
@@ -145,6 +148,29 @@ public class TransactionService {
             toAccount.getAccountNum(),
             request.amount()
         );
+
+    }
+
+    public DeleteConfirmationResponse deleteAccount(DeleteRequest request) {
+        
+        Transaction currentTransaction = new Transaction();
+
+        if (!transactionRepository.findById(request.id()).isPresent()) {
+            throw new RuntimeException("No Transaction found");
+        } 
+        else {
+            currentTransaction = transactionRepository.findById(request.id()).get();
+        }
+
+        currentTransaction.setDeletedAt(LocalDateTime.now());
+
+        transactionRepository.save(currentTransaction);
+
+        return new DeleteConfirmationResponse(
+            request.id(),
+            "Transaction has successfully been deleted"
+        );
+
 
     }
 }
