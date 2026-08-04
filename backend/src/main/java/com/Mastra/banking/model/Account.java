@@ -48,6 +48,7 @@ public class Account {
 
     @PrePersist
     protected void onCreate(){
+        this.balance = BigDecimal.ZERO;
         this.createdAt = LocalDateTime.now();
         if(this.status == null) {
             this.status = Status.ACTIVE;
@@ -57,4 +58,6 @@ public class Account {
     public enum Status {
         ACTIVE, CLOSED;
     }
+
+
 }

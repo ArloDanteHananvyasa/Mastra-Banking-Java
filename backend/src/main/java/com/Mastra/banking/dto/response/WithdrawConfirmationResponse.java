@@ -2,7 +2,8 @@ package com.Mastra.banking.dto.response;
 
 import java.math.BigDecimal;
 
-public record DepositConfirmationResponse(
+public record WithdrawConfirmationResponse(
     Long transactionId,
-    BigDecimal amount
+    BigDecimal amount,
+    BigDecimal newBalance
 ) {}

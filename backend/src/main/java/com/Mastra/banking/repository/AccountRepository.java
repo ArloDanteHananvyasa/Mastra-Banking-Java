@@ -10,6 +10,8 @@ import com.Mastra.banking.model.Account;
 import com.Mastra.banking.model.Holder;
 
 public interface AccountRepository extends JpaRepository<Account, Long>{
+
+    boolean existsByAccountNum(String accountNum);
     
     Optional<Account> findByAccountNum(String accountNum);
 

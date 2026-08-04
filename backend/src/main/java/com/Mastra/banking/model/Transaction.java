@@ -35,7 +35,7 @@ public class Transaction {
     private Account account;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "relatedAccountId", nullable = false)
+    @JoinColumn(name = "relatedAccountId", nullable = true)
     private Account relatedAccount;
 
     @PrePersist
