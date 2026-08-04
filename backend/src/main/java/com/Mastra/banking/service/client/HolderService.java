@@ -9,8 +9,7 @@ import com.Mastra.banking.dto.request.DeleteRequest;
 import com.Mastra.banking.dto.request.LoginRequest;
 import com.Mastra.banking.dto.request.RegisterHolderRequest;
 import com.Mastra.banking.dto.response.DeleteConfirmationResponse;
-import com.Mastra.banking.dto.response.LoginHolderResponse;
-import com.Mastra.banking.model.Account;
+import com.Mastra.banking.dto.response.LoginResponse;
 import com.Mastra.banking.model.Holder;
 import com.Mastra.banking.repository.HolderRepository;
 
@@ -23,7 +22,7 @@ public class HolderService {
     private final HolderRepository holderRepository;
     private final PasswordEncoder encoder;
 
-    public LoginHolderResponse register(RegisterHolderRequest request) {
+    public LoginResponse register(RegisterHolderRequest request) {
 
         if (holderRepository.findByEmail(request.email()).isPresent()) {
             throw new RuntimeException("Email already registered");
@@ -39,7 +38,7 @@ public class HolderService {
 
         holderRepository.save(holder);
 
-        return new LoginHolderResponse(
+        return new LoginResponse(
             holder.getHolderId(),
             holder.getName(),
             holder.getEmail()
@@ -47,7 +46,7 @@ public class HolderService {
         );
     }
 
-    public LoginHolderResponse login(LoginRequest request) {
+    public LoginResponse login(LoginRequest request) {
 
         Holder currentHolder = new Holder();
         
@@ -59,7 +58,7 @@ public class HolderService {
         }
 
         if (encoder.matches(currentHolder.getPassword(), request.password())) {
-            return new LoginHolderResponse(
+            return new LoginResponse(
                 currentHolder.getHolderId(),
                 currentHolder.getName(),
                 currentHolder.getEmail()
