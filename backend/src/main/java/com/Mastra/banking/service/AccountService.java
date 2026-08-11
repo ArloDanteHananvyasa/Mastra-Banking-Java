@@ -1,4 +1,4 @@
-package com.Mastra.banking.service.client;
+package com.Mastra.banking.service;
 
 import java.security.SecureRandom;
 import java.time.LocalDate;
@@ -13,6 +13,7 @@ import com.Mastra.banking.dto.response.DeleteConfirmationResponse;
 import com.Mastra.banking.model.Account;
 import com.Mastra.banking.repository.AccountRepository;
 import com.Mastra.banking.repository.HolderRepository;
+import com.Mastra.banking.util.exception.ResourceNotFoundException;
 
 import lombok.RequiredArgsConstructor;
 
@@ -24,6 +25,7 @@ public class AccountService {
     private final HolderRepository holderRepository;
 
     public AccountCreationResponse createAccount(CreateAccountRequest request) {
+        
         Account newAccount = new Account();
         newAccount.setHolder(holderRepository.findById(request.holderId()).get());
 
@@ -45,14 +47,8 @@ public class AccountService {
 
     public DeleteConfirmationResponse deleteAccount(DeleteRequest request) {
         
-        Account currentAccount = new Account();
-
-        if (!accountRepository.findById(request.id()).isPresent()) {
-            throw new RuntimeException("No Account found");
-        } 
-        else {
-            currentAccount = accountRepository.findById(request.id()).get();
-        }
+        Account currentAccount = accountRepository.findById(request.id())
+            .orElseThrow(() -> new ResourceNotFoundException("Account is not found"));
 
         currentAccount.setDeletedAt(LocalDateTime.now());
 

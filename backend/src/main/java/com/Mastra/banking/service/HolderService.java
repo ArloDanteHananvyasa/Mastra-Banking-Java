@@ -1,7 +1,8 @@
-package com.Mastra.banking.service.client;
+package com.Mastra.banking.service;
 
 import java.time.LocalDateTime;
 
+import org.apache.tomcat.util.file.ConfigurationSource.Resource;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -10,8 +11,12 @@ import com.Mastra.banking.dto.request.LoginRequest;
 import com.Mastra.banking.dto.request.RegisterHolderRequest;
 import com.Mastra.banking.dto.response.DeleteConfirmationResponse;
 import com.Mastra.banking.dto.response.LoginResponse;
+import com.Mastra.banking.dto.response.RegistrationResponse;
 import com.Mastra.banking.model.Holder;
 import com.Mastra.banking.repository.HolderRepository;
+import com.Mastra.banking.util.JwtUtil;
+import com.Mastra.banking.util.exception.DuplicateEmailException;
+import com.Mastra.banking.util.exception.ResourceNotFoundException;
 
 import lombok.RequiredArgsConstructor;
 
@@ -21,11 +26,12 @@ public class HolderService {
     
     private final HolderRepository holderRepository;
     private final PasswordEncoder encoder;
+    private final JwtUtil util;
 
-    public LoginResponse register(RegisterHolderRequest request) {
+    public RegistrationResponse register(RegisterHolderRequest request) {
 
         if (holderRepository.findByEmail(request.email()).isPresent()) {
-            throw new RuntimeException("Email already registered");
+            throw new DuplicateEmailException("Email already registered");
         }
 
         Holder holder = new Holder();
@@ -38,34 +44,31 @@ public class HolderService {
 
         holderRepository.save(holder);
 
-        return new LoginResponse(
+        return new RegistrationResponse(
             holder.getHolderId(),
             holder.getName(),
             holder.getEmail()
-            //JWT Token should be here i'm guessing
         );
     }
 
     public LoginResponse login(LoginRequest request) {
 
-        Holder currentHolder = new Holder();
-        
-        if (!holderRepository.findByEmail(request.email()).isPresent()) {
-            throw new RuntimeException("No Account registered under this email address");
-        } 
-        else {
-            currentHolder = holderRepository.findByEmail(request.email()).get();
-        }
+        Holder currentHolder = holderRepository.findByEmail(request.email())
+            .orElseThrow(() -> new ResourceNotFoundException("No account found under this email"));
 
-        if (encoder.matches(currentHolder.getPassword(), request.password())) {
+
+        if (encoder.matches(request.password(), currentHolder.getPassword())) {
+
+            String token = util.generateToken(request.email(), "HOLDER");
+
             return new LoginResponse(
                 currentHolder.getHolderId(),
                 currentHolder.getName(),
-                currentHolder.getEmail()
-                //JWT Token should be here i'm guessing
+                currentHolder.getEmail(),
+                token
             );
         } else {
-            throw new RuntimeException("Incorrect Login Credentials!");
+            throw new ResourceNotFoundException("Incorrect Login Credentials!");
         }
 
         
@@ -73,16 +76,10 @@ public class HolderService {
 
     //need to add a logout handler
 
-    public DeleteConfirmationResponse deleteAccount(DeleteRequest request) {
+    public DeleteConfirmationResponse deleteHolder(DeleteRequest request) {
         
-        Holder currentHolder = new Holder();
-
-        if (!holderRepository.findById(request.id()).isPresent()) {
-            throw new RuntimeException("No Holder found");
-        } 
-        else {
-            currentHolder = holderRepository.findById(request.id()).get();
-        }
+        Holder currentHolder = holderRepository.findById(request.id())
+            .orElseThrow(() -> new ResourceNotFoundException("No account found under this email"));
 
         currentHolder.setDeletedAt(LocalDateTime.now());
 

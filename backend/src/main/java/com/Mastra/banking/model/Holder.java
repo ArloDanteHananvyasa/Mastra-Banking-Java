@@ -3,6 +3,8 @@ package com.Mastra.banking.model;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -39,13 +41,14 @@ public class Holder {
 
     @NotBlank
     @Column(nullable = false)
+    @Size(min = 8)
     private String password;
 
     @NotBlank
     @Column(nullable = false)
     private String pob;
 
-    @NotBlank
+    @NotNull
     @Column(nullable = false)
     private LocalDate dob;
 

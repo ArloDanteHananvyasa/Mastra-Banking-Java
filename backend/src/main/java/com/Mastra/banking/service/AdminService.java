@@ -1,4 +1,4 @@
-package com.Mastra.banking.service.client;
+package com.Mastra.banking.service;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -7,6 +7,9 @@ import com.Mastra.banking.dto.request.LoginRequest;
 import com.Mastra.banking.dto.response.LoginResponse;
 import com.Mastra.banking.model.Admin;
 import com.Mastra.banking.repository.AdminRepository;
+import com.Mastra.banking.util.JwtUtil;
+import com.Mastra.banking.util.exception.InvalidCredentialsException;
+import com.Mastra.banking.util.exception.ResourceNotFoundException;
 
 import lombok.RequiredArgsConstructor;
 
@@ -16,27 +19,25 @@ public class AdminService {
     
     private final AdminRepository adminRepository;
     private final PasswordEncoder encoder;
+    private final JwtUtil util;
 
     public LoginResponse login(LoginRequest request) {
 
-        Admin currentAdmin = new Admin();
-        
-        if (!adminRepository.findByEmail(request.email()).isPresent()) {
-            throw new RuntimeException("No Account registered under this email address");
-        } 
-        else {
-            currentAdmin = adminRepository.findByEmail(request.email()).get();
-        }
+        Admin currentAdmin = adminRepository.findByEmail(request.email())
+            .orElseThrow(() -> new ResourceNotFoundException("No account found under this email"));
 
-        if (encoder.matches(currentAdmin.getPassword(), request.password())) {
+        if (encoder.matches(request.password(), currentAdmin.getPassword())) {
+
+            String token = util.generateToken(request.email(), "Admin");
+
             return new LoginResponse(
                 currentAdmin.getAdminId(),
                 currentAdmin.getName(),
-                currentAdmin.getEmail()
-                //JWT Token should be here i'm guessing
+                currentAdmin.getEmail(),
+                token
             );
         } else {
-            throw new RuntimeException("Incorrect Login Credentials!");
+            throw new InvalidCredentialsException("Incorrect Login Credentials!");
         }
 
         

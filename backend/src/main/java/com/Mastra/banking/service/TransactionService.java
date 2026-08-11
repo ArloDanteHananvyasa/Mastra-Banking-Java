@@ -1,6 +1,7 @@
-package com.Mastra.banking.service.client;
+package com.Mastra.banking.service;
 
 import java.math.BigDecimal;
+import java.nio.file.AccessDeniedException;
 import java.time.LocalDateTime;
 
 import org.springframework.stereotype.Service;
@@ -19,6 +20,8 @@ import com.Mastra.banking.model.Transaction;
 import com.Mastra.banking.model.Transaction.Type;
 import com.Mastra.banking.repository.AccountRepository;
 import com.Mastra.banking.repository.TransactionRepository;
+import com.Mastra.banking.util.exception.AccountAccessDeniedException;
+import com.Mastra.banking.util.exception.ResourceNotFoundException;
 
 import lombok.RequiredArgsConstructor;
 
@@ -30,15 +33,13 @@ public class TransactionService {
     private final AccountRepository accountRepository;
 
     @Transactional
-    public DepositConfirmationResponse deposit(DepositRequest request) {
+    public DepositConfirmationResponse deposit(DepositRequest request, String currentEmail) {
         
-        Account currentAccount = new Account();
+        Account currentAccount = accountRepository.findById(request.accountId())
+            .orElseThrow(() -> new ResourceNotFoundException("No account found under this number"));
 
-        if (accountRepository.findById(request.accountId()).isPresent()) {
-            throw new RuntimeException("Cannot find account with this number");
-        }
-        else {
-            currentAccount = accountRepository.findById(request.accountId()).get();
+        if (!currentAccount.getHolder().getEmail().equals(currentEmail)) {
+            throw new AccountAccessDeniedException("You don't have access to this account");
         }
         
         BigDecimal newBalance = currentAccount.getBalance().add(request.amount());
@@ -62,15 +63,13 @@ public class TransactionService {
     }
 
     @Transactional
-    public WithdrawConfirmationResponse withdraw(WithdrawRequest request) {
+    public WithdrawConfirmationResponse withdraw(WithdrawRequest request, String currentEmail) {
         
-        Account currentAccount = new Account();
+        Account currentAccount = accountRepository.findById(request.accountId())
+            .orElseThrow(() -> new ResourceNotFoundException("No account found under this number"));
 
-        if (accountRepository.findById(request.accountId()).isPresent()) {
-            throw new RuntimeException("Cannot find account with this number");
-        }
-        else {
-            currentAccount = accountRepository.findById(request.accountId()).get();
+        if (!currentAccount.getHolder().getEmail().equals(currentEmail)) {
+            throw new AccountAccessDeniedException("You don't have access to this account");
         }
 
         BigDecimal newBalance = currentAccount.getBalance().subtract(request.amount());
@@ -98,28 +97,23 @@ public class TransactionService {
     } 
 
     @Transactional
-    public TransferConfirmationResponse transfer(TransferRequest request) {
+    public TransferConfirmationResponse transfer(TransferRequest request, String currentEmail) {
 
-        Account fromAccount = new Account();
-        if (accountRepository.findById(request.fromAccount()).isPresent()) {
-            throw new RuntimeException("This account doesn't exist");
+        Account fromAccount = accountRepository.findById(request.fromAccount())
+            .orElseThrow(() -> new ResourceNotFoundException("No account found under this number"));
+
+        if (!fromAccount.getHolder().getEmail().equals(currentEmail)) {
+            throw new AccountAccessDeniedException("You don't have access to this account");
         }
-        else {
-            fromAccount = accountRepository.findById(request.fromAccount()).get();
-        }
+
         BigDecimal fromBalance = fromAccount.getBalance();
 
-        if (fromBalance.compareTo(BigDecimal.ZERO) == -1) {
+        if (fromBalance.subtract(request.amount()).compareTo(BigDecimal.ZERO) == -1) {
             throw new RuntimeException("DECLINED! Withdrawal cannot exceed account balance.");
         }
         
-        Account toAccount = new Account();
-        if (accountRepository.findByAccountNum(request.toAccountNum()).isPresent()) {
-            throw new RuntimeException("Cannot find account with this number");
-        }
-        else {
-            toAccount = accountRepository.findByAccountNum(request.toAccountNum()).get();
-        }
+        Account toAccount = accountRepository.findByAccountNum(request.toAccountNum())
+            .orElseThrow(() -> new ResourceNotFoundException("No account found under this number"));
         BigDecimal toBalance = toAccount.getBalance();
 
         fromAccount.setBalance(fromBalance.subtract(request.amount()));
@@ -151,16 +145,10 @@ public class TransactionService {
 
     }
 
-    public DeleteConfirmationResponse deleteAccount(DeleteRequest request) {
+    public DeleteConfirmationResponse deleteTransaction(DeleteRequest request) {
         
-        Transaction currentTransaction = new Transaction();
-
-        if (!transactionRepository.findById(request.id()).isPresent()) {
-            throw new RuntimeException("No Transaction found");
-        } 
-        else {
-            currentTransaction = transactionRepository.findById(request.id()).get();
-        }
+        Transaction currentTransaction = transactionRepository.findById(request.id())
+            .orElseThrow(() -> new ResourceNotFoundException("No transaction found"));
 
         currentTransaction.setDeletedAt(LocalDateTime.now());
 
