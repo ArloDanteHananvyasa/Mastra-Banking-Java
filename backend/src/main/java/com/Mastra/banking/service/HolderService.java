@@ -1,6 +1,8 @@
 package com.Mastra.banking.service;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.apache.tomcat.util.file.ConfigurationSource.Resource;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -10,6 +12,7 @@ import com.Mastra.banking.dto.request.DeleteRequest;
 import com.Mastra.banking.dto.request.LoginRequest;
 import com.Mastra.banking.dto.request.RegisterHolderRequest;
 import com.Mastra.banking.dto.response.DeleteConfirmationResponse;
+import com.Mastra.banking.dto.response.HolderResponse;
 import com.Mastra.banking.dto.response.LoginResponse;
 import com.Mastra.banking.dto.response.RegistrationResponse;
 import com.Mastra.banking.model.Holder;
@@ -91,5 +94,40 @@ public class HolderService {
         );
 
 
+    }
+
+    public HolderResponse getHolder(String email) {
+        
+        Holder currentHolder = holderRepository.findByEmail(email)
+            .orElseThrow(() -> new ResourceNotFoundException("No account found under this email"));
+
+        return new HolderResponse(
+            currentHolder.getHolderId(),
+            currentHolder.getName(),
+            currentHolder.getEmail(),
+            currentHolder.getPhone(),
+            currentHolder.getPob(),
+            currentHolder.getDob()
+        );
+    }
+
+    public List<HolderResponse> getAllHolders() {
+
+        List<Holder> holders = holderRepository.findAll();
+
+        List<HolderResponse> response = new ArrayList<HolderResponse>();
+
+        for (Holder h : holders) {
+            response.add(new HolderResponse(
+                h.getHolderId(),
+                h.getName(),
+                h.getEmail(),
+                h.getPhone(),
+                h.getPob(),
+                h.getDob()
+            ));
+        }
+
+        return response;
     }
 }

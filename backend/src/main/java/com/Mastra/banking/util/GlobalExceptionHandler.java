@@ -26,7 +26,7 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(AccountAccessDeniedException.class)
-    public ResponseEntity<Map<String, String>> handleDuplicateEmail(AccountAccessDeniedException ex) {
+    public ResponseEntity<Map<String, String>> AccountAccessDenied(AccountAccessDeniedException ex) {
         Map<String, String> body = Map.of("error", ex.getMessage());
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(body);
     }
@@ -45,12 +45,8 @@ public class GlobalExceptionHandler {
     
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<Map<String, String>> handleRuntimeException(RuntimeException ex) {
-
         Map<String, String> body = Map.of("error", ex.getMessage());
-        
-        return ResponseEntity
-            .badRequest()
-            .body(body);
+        return ResponseEntity.badRequest().body(body);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

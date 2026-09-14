@@ -28,7 +28,7 @@ public class AdminService {
 
         if (encoder.matches(request.password(), currentAdmin.getPassword())) {
 
-            String token = util.generateToken(request.email(), "Admin");
+            String token = util.generateToken(request.email(), "ADMIN");
 
             return new LoginResponse(
                 currentAdmin.getAdminId(),

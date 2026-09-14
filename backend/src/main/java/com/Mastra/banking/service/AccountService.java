@@ -3,14 +3,18 @@ package com.Mastra.banking.service;
 import java.security.SecureRandom;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.springframework.stereotype.Service;
 
 import com.Mastra.banking.dto.request.CreateAccountRequest;
 import com.Mastra.banking.dto.request.DeleteRequest;
 import com.Mastra.banking.dto.response.AccountCreationResponse;
+import com.Mastra.banking.dto.response.AccountResponse;
 import com.Mastra.banking.dto.response.DeleteConfirmationResponse;
 import com.Mastra.banking.model.Account;
+import com.Mastra.banking.model.Holder;
 import com.Mastra.banking.repository.AccountRepository;
 import com.Mastra.banking.repository.HolderRepository;
 import com.Mastra.banking.util.exception.ResourceNotFoundException;
@@ -60,6 +64,46 @@ public class AccountService {
         );
 
 
+    }
+
+    public List<AccountResponse> getAccounts(String currentEmail) {
+
+        Holder currentHolder = holderRepository.findByEmail(currentEmail)
+            .orElseThrow(() -> new ResourceNotFoundException("Holder not found"));
+
+        List<Account> accounts = accountRepository.findByHolder(currentHolder);
+
+        List<AccountResponse> accResponse = new ArrayList<AccountResponse>();
+        for (Account a : accounts) {
+            accResponse.add(new AccountResponse(
+                a.getAccountId(),
+                a.getAccountNum(),
+                a.getBalance(),
+                a.getStatus()
+            ));
+        }
+
+        return accResponse;    
+    }
+
+    public List<AccountResponse> getAccounts(Long holderId) {
+
+        Holder currentHolder = holderRepository.findById(holderId)
+            .orElseThrow(() -> new ResourceNotFoundException("Holder not found"));
+
+        List<Account> accounts = accountRepository.findByHolder(currentHolder);
+
+        List<AccountResponse> accResponse = new ArrayList<AccountResponse>();
+        for (Account a : accounts) {
+            accResponse.add(new AccountResponse(
+                a.getAccountId(),
+                a.getAccountNum(),
+                a.getBalance(),
+                a.getStatus()
+            ));
+        }
+
+        return accResponse;    
     }
 
     private String generateAccountNumber() {

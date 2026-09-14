@@ -3,6 +3,8 @@ package com.Mastra.banking.service;
 import java.math.BigDecimal;
 import java.nio.file.AccessDeniedException;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -13,6 +15,7 @@ import com.Mastra.banking.dto.request.TransferRequest;
 import com.Mastra.banking.dto.request.WithdrawRequest;
 import com.Mastra.banking.dto.response.DeleteConfirmationResponse;
 import com.Mastra.banking.dto.response.DepositConfirmationResponse;
+import com.Mastra.banking.dto.response.TransactionHistoryResponse;
 import com.Mastra.banking.dto.response.TransferConfirmationResponse;
 import com.Mastra.banking.dto.response.WithdrawConfirmationResponse;
 import com.Mastra.banking.model.Account;
@@ -160,5 +163,77 @@ public class TransactionService {
         );
 
 
+    }
+
+    public List<TransactionHistoryResponse> getTransactionHistory(Long account, String email) {
+        Account currentAccount = accountRepository.findById(account).orElseThrow(() -> new ResourceNotFoundException("No account found"));
+
+        if (!currentAccount.getHolder().getEmail().equals(email)) {
+            throw new AccountAccessDeniedException("You don't have access to this account");
+        }
+
+        List<Transaction> transactions = transactionRepository.findByAccount(currentAccount);
+
+        List<TransactionHistoryResponse> responses = new ArrayList<TransactionHistoryResponse>();
+
+        for (Transaction t : transactions) {
+
+
+            if (t.getType() == Transaction.Type.TRANSFER_IN || t.getType() == Transaction.Type.TRANSFER_OUT) {
+                responses.add(new TransactionHistoryResponse(
+                    t.getTransactionId(),
+                    t.getTimeStamp(),
+                    t.getAmount(),
+                    t.getType(),
+                    t.getRelatedAccount().getAccountNum()
+                ));
+            } else {
+                responses.add(new TransactionHistoryResponse(
+                    t.getTransactionId(),
+                    t.getTimeStamp(),
+                    t.getAmount(),
+                    t.getType(),
+                    ""
+                ));
+            }
+        }
+
+        return responses;
+    }
+
+    public List<TransactionHistoryResponse> getTransactionHistory(Long account, Long holder) {
+        Account currentAccount = accountRepository.findById(account).orElseThrow(() -> new ResourceNotFoundException("No account found"));
+
+        if (currentAccount.getHolder().getHolderId() != holder) {
+            throw new AccountAccessDeniedException("You don't have access to this account");
+        }
+
+        List<Transaction> transactions = transactionRepository.findByAccount(currentAccount);
+
+        List<TransactionHistoryResponse> responses = new ArrayList<TransactionHistoryResponse>();
+
+        for (Transaction t : transactions) {
+
+
+            if (t.getType() == Transaction.Type.TRANSFER_IN || t.getType() == Transaction.Type.TRANSFER_OUT) {
+                responses.add(new TransactionHistoryResponse(
+                    t.getTransactionId(),
+                    t.getTimeStamp(),
+                    t.getAmount(),
+                    t.getType(),
+                    t.getRelatedAccount().getAccountNum()
+                ));
+            } else {
+                responses.add(new TransactionHistoryResponse(
+                    t.getTransactionId(),
+                    t.getTimeStamp(),
+                    t.getAmount(),
+                    t.getType(),
+                    ""
+                ));
+            }
+        }
+
+        return responses;
     }
 }
